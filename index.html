@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中曼 vs 中石油 + 油价框架 — 精简版</title>
+<style>
+  :root{
+    --navy:#16243f; --navy2:#1f3357; --gold:#c9a227; --gold-soft:#e7d9a8;
+    --ink:#1d2733; --muted:#5b6776; --line:#e3e8ef;
+    --red:#d8392f; --redbg:#fdecea; --redbd:#f3b6b1;
+    --amber:#d98a00; --amberbg:#fef4e3; --amberbd:#f3d39a;
+    --green:#2e9e5b; --greenbg:#e8f6ee; --greenbd:#b6e3c8;
+    --bg:#eef1f5; --card:#ffffff; --shadow:0 4px 18px rgba(22,36,63,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.75; font-size:15px;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{display:flex;max-width:1280px;margin:0 auto;gap:28px;padding:0 22px 80px}
+
+  /* ---------- Sidebar TOC ---------- */
+  .toc{position:sticky;top:24px;align-self:flex-start;width:230px;flex:0 0 230px;
+    background:var(--card);border-radius:14px;padding:20px 16px;box-shadow:var(--shadow);
+    max-height:calc(100vh - 48px);overflow:auto}
+  .toc h4{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+  .toc a{display:block;padding:7px 10px;border-radius:8px;color:var(--muted);font-size:13.5px;
+    border-left:3px solid transparent;transition:.18s}
+  .toc a:hover{background:#f4f6fa;color:var(--ink)}
+  .toc a.active{background:#f1f5fb;color:var(--navy);border-left-color:var(--gold);font-weight:600}
+  .toc .sub{padding-left:22px;font-size:12.5px}
+
+  /* ---------- Main ---------- */
+  .main{flex:1;min-width:0}
+  .hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#243a63 100%);
+    color:#fff;border-radius:18px;padding:42px 40px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+  .hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;
+    background:radial-gradient(circle,rgba(201,162,39,.35),transparent 70%);border-radius:50%}
+  .eyebrow{color:var(--gold-soft);font-size:13px;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+  .hero h1{font-family:"Noto Serif SC","Songti SC",serif;font-size:34px;line-height:1.25;margin:12px 0 8px;font-weight:800}
+  .hero .sub{font-size:16px;color:#cdd7e6;font-weight:300}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;position:relative;z-index:1}
+  .meta .chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+    padding:6px 13px;border-radius:999px;font-size:12.5px;color:#e6ecf5;backdrop-filter:blur(4px)}
+  .meta .chip b{color:var(--gold-soft)}
+
+  section{background:var(--card);border-radius:16px;padding:30px 32px;margin-top:22px;box-shadow:var(--shadow)}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--line)}
+  .sec-head .num{background:var(--navy);color:#fff;font-size:13px;font-weight:700;width:30px;height:30px;
+    border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 30px}
+  .sec-head h2{font-size:21px;font-weight:800;color:var(--navy)}
+  .sec-head .stars{margin-left:auto;color:var(--gold);font-size:13px;letter-spacing:1px}
+  h3{font-size:16.5px;color:var(--navy2);margin:24px 0 12px;font-weight:700;display:flex;align-items:center;gap:8px}
+  h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  p{margin:10px 0;color:#33414f}
+
+  /* verdict banner */
+  .verdict{border-radius:14px;padding:22px 26px;margin:6px 0 18px;
+    background:linear-gradient(135deg,#fdecea,#fff3f1);border:1px solid var(--redbd)}
+  .verdict .tag{display:inline-block;background:var(--red);color:#fff;font-weight:700;font-size:13px;
+    padding:4px 14px;border-radius:999px;letter-spacing:.05em}
+  .verdict h3{margin:12px 0 6px;color:var(--red);font-size:18px}
+  .verdict p{color:#5a2b27;margin:6px 0}
+
+  /* metric cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:16px 0}
+  .card{border:1px solid var(--line);border-radius:13px;padding:18px 18px 16px;position:relative;background:#fff;
+    border-top:4px solid var(--line)}
+  .card.red{border-top-color:var(--red)}
+  .card.amber{border-top-color:var(--amber)}
+  .card.green{border-top-color:var(--green)}
+  .card .label{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  .card .val{font-size:30px;font-weight:800;color:var(--navy);margin:6px 0 2px;line-height:1.1}
+  .card .val small{font-size:14px;font-weight:600;color:var(--muted)}
+  .card .note{font-size:12px;color:var(--muted);margin-top:4px}
+
+  /* key points */
+  .keypoints{list-style:none;counter-reset:k}
+  .keypoints li{counter-increment:k;position:relative;padding:12px 16px 12px 50px;margin:10px 0;
+    background:#f8fafc;border-left:4px solid var(--gold);border-radius:0 10px 10px 0;font-size:14.5px}
+  .keypoints li::before{content:counter(k);position:absolute;left:14px;top:12px;width:24px;height:24px;
+    background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700}
+  .keypoints b{color:var(--navy)}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;margin:14px 0;border-radius:12px;border:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+  thead th{background:var(--navy);color:#fff;text-align:left;padding:11px 14px;font-weight:600;font-size:13px;
+    white-space:nowrap}
+  tbody td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#f8fafc}
+  tbody tr:hover{background:#f1f5fb}
+  td .em{font-weight:700;color:var(--navy)}
+  td.red{color:var(--red);font-weight:700}
+  td.amber{color:var(--amber);font-weight:700}
+  td.green{color:var(--green);font-weight:700}
+
+  /* badges */
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+  .badge.red{background:var(--redbg);color:var(--red)}
+  .badge.amber{background:var(--amberbg);color:var(--amber)}
+  .badge.green{background:var(--greenbg);color:var(--green)}
+  .badge.navy{background:#e7eefb;color:var(--navy)}
+
+  /* bar chart */
+  .chart{margin:18px 0;background:#fafbfd;border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .chart .ctitle{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:14px;letter-spacing:.03em}
+  .bar-row{display:flex;align-items:center;gap:12px;margin:9px 0}
+  .bar-row .blab{width:118px;flex:0 0 118px;font-size:13px;color:var(--ink);text-align:right}
+  .bar-row .btrack{flex:1;background:#eef1f5;border-radius:6px;height:22px;position:relative;overflow:hidden}
+  .bar-row .bfill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;
+    padding-right:8px;color:#fff;font-size:12px;font-weight:700;transition:width 1s}
+  .bfill.red{background:linear-gradient(90deg,#e0584f,var(--red))}
+  .bfill.amber{background:linear-gradient(90deg,#e7a83f,var(--amber))}
+  .bfill.navy{background:linear-gradient(90deg,#39527e,#16243f)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+  /* light strip */
+  .lights{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+  .light{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--line);
+    border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600}
+  .light .ld{width:14px;height:14px;border-radius:50%}
+  .ld.red{background:var(--red);box-shadow:0 0 0 4px var(--redbg)}
+  .ld.amber{background:var(--amber);box-shadow:0 0 0 4px var(--amberbg)}
+  .ld.green{background:var(--green);box-shadow:0 0 0 4px var(--greenbg)}
+
+  /* callouts */
+  .note-box{background:#f4f7fb;border:1px solid #d8e2f0;border-left:4px solid var(--navy);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0;font-size:14px}
+  .warn-box{background:var(--amberbg);border:1px solid var(--amberbd);border-left:4px solid var(--amber);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0;font-size:14px}
+  .quote{background:#f8fafc;border-left:4px solid var(--gold);padding:14px 20px;margin:16px 0;
+    font-size:15px;color:var(--navy2);font-style:italic;border-radius:0 10px 10px 0}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:900px){.two-col{grid-template-columns:1fr}.toc{display:none}}
+
+  /* footer */
+  .foot{margin-top:22px;background:#fff;border-radius:16px;padding:24px 32px;box-shadow:var(--shadow);
+    font-size:12.5px;color:var(--muted);border-top:4px solid var(--gold)}
+  .foot b{color:var(--navy)}
+  .disclaimer{background:var(--redbg);border:1px solid var(--redbd);border-radius:12px;padding:16px 20px;margin-top:14px;
+    font-size:13px;color:#6b332e}
+  #toTop{position:fixed;right:26px;bottom:26px;width:46px;height:46px;border-radius:50%;background:var(--navy);
+    color:#fff;border:none;cursor:pointer;font-size:20px;box-shadow:var(--shadow);opacity:0;visibility:hidden;transition:.3s;z-index:50}
+  #toTop.show{opacity:1;visibility:visible}
+  @media print{
+    body{background:#fff}.toc{display:none}section,.hero,.foot{box-shadow:none;break-inside:avoid}
+    #toTop{display:none}.wrap{display:block;max-width:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- TOC -->
+  <nav class="toc">
+    <h4>目录导航</h4>
+    <a href="#s1">一、油价现状与花旗框架对照</a>
+    <a href="#s2">二、中曼石油 vs 中国石油对比</a>
+    <a href="#s3">三、中曼为何调整 ＋ 市场在等什么</a>
+    <a href="#s4">四、年底／明年石油板块展望</a>
+    <a href="#s5">五、风险提示与数据来源</a>
+  </nav>
+
+  <div class="main">
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="eyebrow">股哥·投研部 · 市场研究参考</div>
+      <h1>中曼 vs 中石油<br>＋ 油价框架</h1>
+      <div class="sub">精简版 · 2026 年 10 月 20 日</div>
+      <div class="meta">
+        <span class="chip">报告时间 <b>2026-10-20</b></span>
+        <span class="chip">数据截止 <b>10-20 收盘</b></span>
+        <span class="chip">WTI <b>100.59 美元</b></span>
+        <span class="chip">美债 10Y <b>5.15%</b></span>
+      </div>
+    </header>
+
+    <!-- 核心结论速览 -->
+    <section id="s0" style="border-top:4px solid var(--gold)">
+      <div class="sec-head"><span class="num">★</span><h2>核心结论速览</h2></div>
+      <div class="verdict">
+        <span class="tag">一句话结论</span>
+        <p>WTI 站上 100、Brent 逼近 111，创 2022 年以来新高；美债 10Y 5.15% 逼近年内高 5.31%，<b>花旗"油价不跌、收益率不见顶"框架当前仍成立</b>，意味着 10Y 大概率在 2026Q4–2027Q1 见顶而非现在。中曼 PE 30.8 / ROE 4.5%、中石油 PE 13.4 / 股息 4.7%——同样是"受益油价"，定位截然不同：中曼是高估值纯上游弹性，中石油是低估值一体化红利。在油价/利率双高、<b>红利价值优于商品弹性</b>，<b>配置偏中石油</b>。年底看油价 95–105 高位震荡，明年关注 OPEC+ 12 月减产会议 ＋ 中期选举 ＋ 中曼 Q3 季报博弈。</p>
+      </div>
+    </section>
+
+    <!-- 一、油价现状 -->
+    <section id="s1">
+      <div class="sec-head"><span class="num">一</span><h2>油价现状与花旗框架对照</h2></div>
+
+      <h3><span class="dot"></span>当前位置（2026-10-20 收盘）</h3>
+      <p>· <b>WTI 连续</b> 100.59 美元/桶（+2.08%），站上 100 整数关，创 2022 年 6 月以来新高。</p>
+      <p>· <b>Brent 连续</b> 111.31 美元/桶（+1.60%），距年内高 119.50 仅低 6.9%。</p>
+      <p>· <b>Brent–WTI 价差</b> −10.72 美元（美油贴水，重质油紧张 ＋ 地缘溢价）。</p>
+
+      <h3><span class="dot"></span>美债框架（因果链：油价 → 盈亏平衡通胀 → 美债 10Y 见顶）</h3>
+      <p>· <b>美债 10Y</b> 5.15%（2026-10-19），逼近年内高点 5.31%。</p>
+      <p>· 曲线 2Y 4.77% &lt; 5Y 4.94% &lt; 10Y 5.15% &lt; 30Y 5.48%，<b>完全正斜、无倒挂</b>。</p>
+      <p>· 10Y–2Y 利差 +38bp，<b>健康形态，衰退未被定价</b>。</p>
+
+      <h3><span class="dot"></span>矛盾与共识</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>信号</th><th>方向</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td>WTI 站 100</td><td>🟡 推高通胀预期</td><td>不支持 10Y 见顶</td></tr>
+          <tr><td>Brent 逼年内高</td><td>🟡 强化通胀粘性</td><td>不支持 10Y 见顶</td></tr>
+          <tr><td>曲线无倒挂</td><td>🟢 衰退未定价</td><td>10Y 高位可持续（非崩塌）</td></tr>
+          <tr><td>OPEC+ 减产纪律</td><td>🟡 油价托底</td><td>推迟 10Y 见顶窗口</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="note-box"><b>结论：</b>油价回落是 10Y 见顶的必要条件，当前不满足。10Y 更可能在 <b>2026Q4–2027Q1</b> 见顶，触发催化 = OPEC+ 12 月会议 / 中东地缘缓和（让油价跌破 90）。</div>
+    </section>
+
+    <!-- 二、对比 -->
+    <section id="s2">
+      <div class="sec-head"><span class="num">二</span><h2>中曼石油 vs 中国石油对比</h2><span class="stars">⭐ 核心</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>维度</th><th>中曼石油</th><th>中国石油</th><th>差异解读</th></tr></thead>
+        <tbody>
+          <tr><td>最新股价</td><td>20.52 元（+2.19%）</td><td>12.85 元（+1.18%）</td><td>—</td></tr>
+          <tr><td>总市值</td><td>94.87 亿</td><td>23,510 亿</td><td>中石油是中曼的 <b>248 倍</b></td></tr>
+          <tr><td><b>市盈率（TTM）</b></td><td><b>30.77</b>（高估值纯弹性）</td><td><b>13.4</b>（一体化红利贴现）</td><td>中曼估值已是周期上沿，中石油仍处均值附近</td></tr>
+          <tr><td><b>市净率</b></td><td><b>2.17</b></td><td><b>1.48</b></td><td>中曼含新井扩张溢价，中石油近账面</td></tr>
+          <tr><td><b>股息率（TTM）</b></td><td><b>0.17%</b>（近乎零）</td><td><b>4.7%</b>（类债红利）</td><td>中石油可以当债配，中曼不能</td></tr>
+          <tr><td>净资产收益率（2026H1）</td><td>4.5%（年化≈9%）</td><td><b>12.7%</b>（年化）</td><td>中石油资本回报碾压</td></tr>
+          <tr><td>营收（2026H1）</td><td>17.06 亿（−13.9%）</td><td>15,274.91 亿（+5.34%）</td><td>中曼销量 −13.9%，中石油全产业链稳</td></tr>
+          <tr><td>归母净利（2026H1）</td><td><b>0.99 亿（−67.0%）</b></td><td><b>1,039.34 亿（+22.0%）</b></td><td>中曼业绩腰斩，中石油稳定增长</td></tr>
+          <tr><td>桶油成本（估算）</td><td>陆上 ~35–45 美元</td><td>行业均 35–50 美元（含炼化）</td><td>成本相当但中曼被销量拖累</td></tr>
+          <tr><td>资产负债率</td><td><b>64.3%</b>（高出中石油 25.4pct）</td><td>38.9%</td><td>中曼油价 −30% 净利可能再腰斩</td></tr>
+        </tbody>
+      </table></div>
+      <div class="quote">同样受益油价，两者属性根本不同——中曼是高 β 纯上游弹性标的，油价 1 美元变动对单桶利润斜率极高，但<b>已被市盈率 30.8 透支</b>（估值已含乐观预期）；中石油是低 β 一体化龙头，<b>油价上涨通过炼化、销售、天然气稀释</b>，但胜在 ROE 12.7%、股息 4.7%、负债 38.9%——是<b>类债红利资产</b>。在油价/利率双高贴现率上行期，红利价值优于商品弹性。</div>
+    </section>
+
+    <!-- 三、中曼为何调整 -->
+    <section id="s3">
+      <div class="sec-head"><span class="num">三</span><h2>中曼为何调整 ＋ 市场在等什么</h2></div>
+
+      <h3><span class="dot"></span>资金面</h3>
+      <p>· 公募 Q2 <b>集体撤退</b>：大成系从 4 只→1 只，单季减 1,017 万股（−85.9%），占流通盘从 2.56%→0.36%。</p>
+      <p>· 接盘仅是"短钱"：<b>北向新进 1,141.7 万股</b>（占流通 2.47%，约 2.34 亿元）、UBS 新进 387.7 万股。</p>
+      <p>· 全国社保 111 组合 −85.6 万股，第一牛散朱逢学 −121.8 万股。</p>
+      <div class="warn-box">⚠️ <b>边际定价权已从公募转移到北向＋外资短钱手里</b>，这类资金止损坚决，无法提供持续性支撑。</div>
+
+      <h3><span class="dot"></span>基本面</h3>
+      <p>· 2026H1 营收 <b>−13.9%</b>、归母净利 <b>−67%</b>、净利率从 15.15%→5.80%。</p>
+      <p>· "藏油不卖"逻辑<b>三重证伪</b>：（1）存货 11.34 亿≈1,400 万桶，仅为中石油（2.4 亿桶）0.6%；（2）存货 +39.5% 却伴随净利 −67%——是被动累库；（3）经营现金流 5.11 亿中 3.21 亿被存货占用（63%），靠借款维持。</p>
+      <p>· 在建工程 +32.16%（坚戈油田 49% 股权落地），<b>2026Q4–2027H1 产能将放量</b>。</p>
+
+      <h3><span class="dot"></span>市场在等</h3>
+      <p>Q3 季报（预计 10 月底披露）——</p>
+      <p>· 若兑现产能放量 ＋ 上游单桶利润修复 → 估值压力暂缓；</p>
+      <p>· 若再现销量 / 存货消化问题 → 30 倍市盈率进一步压缩。</p>
+      <div class="note-box">近 1 月油价 +20%、中曼股价 <b>−7.32%</b>，<b>显著背离</b>。市场未按"油价涨→上游盈利改善"逻辑定价，本质是对中报暴雷的提前 ＋ 公募撤退后的筹码再分配双重压制。</div>
+    </section>
+
+    <!-- 四、展望 -->
+    <section id="s4">
+      <div class="sec-head"><span class="num">四</span><h2>年底／明年石油板块展望</h2></div>
+
+      <h3><span class="dot"></span>油价路径</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>情景</th><th>概率</th><th>WTI 区间</th><th>触发</th></tr></thead>
+        <tbody>
+          <tr><td><b>基准（高位震荡）</b></td><td>60%</td><td>95–105 美元</td><td>OPEC+ 12 月会议延减产，冬季取暖需求托底</td></tr>
+          <tr><td>上行（地缘升级）</td><td>25%</td><td>&gt;105 美元</td><td>中东/俄乌意外，Brent 破 115</td></tr>
+          <tr><td>回落（供给回归）</td><td>15%</td><td>&lt;95 美元</td><td>OPEC+ 内部分裂（哈萨克/阿联酋超产）、美国战略储备抛储</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3><span class="dot"></span>配置优先序（年底前）</h3>
+      <div class="lights">
+        <span class="light"><span class="ld green"></span>🟢 红利型一体化（中石油类）：高股息 4.7% ＋ 类债属性，在 10Y 高位下提供稳定票息</span>
+        <span class="light"><span class="ld amber"></span>🟡 短久期现金 / 类现金：等待 10Y 见顶信号（油价跌破 90）</span>
+        <span class="light"><span class="ld red"></span>🔴 高估值纯上游弹性（中曼类）：PE 30.8 / ROE 4.5% 已被透支，等 Q3 季报业绩验证再观察</span>
+      </div>
+
+      <h3><span class="dot"></span>关键时点</h3>
+      <p>· <b>2026-10 月底</b>：中曼 Q3 季报 → 业绩验证窗口。</p>
+      <p>· <b>2026-11 美国中期选举</b>：财政/关税不确定性，可能通过期限溢价推高 10Y。</p>
+      <p>· <b>2026-12 OPEC+ 会议</b>：减产是否延至 2027、增产节点。</p>
+      <p>· <b>2027Q1</b>：若油价破 90，10Y 有望趋势性回落 → 红利 ＋ 长久期资产吸引力上升。</p>
+    </section>
+
+    <!-- 五、风险与来源 -->
+    <section id="s5">
+      <div class="sec-head"><span class="num">五</span><h2>风险提示与数据来源</h2></div>
+      <h3><span class="dot"></span>风险提示</h3>
+      <p>· <b>数据缺失</b>：5 项宏观数据当日不可得，部分判断依赖间接推断。</p>
+      <p>· <b>估算误差</b>：中曼单桶实现油价 / 完全成本财报未单列，用行业估算。</p>
+      <p>· <b>股价波动</b>：北向 / UBS 新进接盘属性偏短，中曼股价波动率高于基本面。</p>
+      <p>· <b>OPEC+ 分裂风险</b>：哈萨克 / 阿联酋超产若被默许，减产托底逻辑可能松动。</p>
+      <p>· <b>地缘突发</b>：中东 / 俄乌任何重大事件都可能在 24 小时内改变油价路径。</p>
+      <h3><span class="dot"></span>数据来源</h3>
+      <p style="font-size:13.5px;color:var(--muted);">腾讯财经 / 东方财富 / 新浪期货实时报价（2026-10-20）；oilprice.com 实时；akshare 美债数据（2026-10-19）；东方财富 F10 财务报表（2026H1）。由股哥·投研部整理。</p>
+    </section>
+
+    <!-- FOOTER -->
+    <div class="foot">
+      <b>一句话总结：</b>油价破百、美债逼近年内高，花旗框架当前仍成立；中曼（高估值纯弹性）与中石油（低估值一体化红利）属性迥异，油价/利率双高下红利价值优于商品弹性。年底油价看 95–105 高位震荡，明年看 OPEC+ 会议、中期选举与中曼季报博弈。
+      <div class="disclaimer">本文由「股哥·投研部」整理，基于公开信息汇总，<b>不构成投资建议</b>。股市有风险，决策需自行核实最新数据。</div>
+    </div>
+
+  </div>
+</div>
+
+<button id="toTop" title="回到顶部">↑</button>
+<script>
+  const toTop=document.getElementById('toTop');
+  window.addEventListener('scroll',()=>{toTop.classList.toggle('show',window.scrollY>500)});
+  toTop.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+  const links=[...document.querySelectorAll('.toc a')];
+  const secs=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){
+      const id='#'+e.target.id;
+      links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')===id));
+    }});
+  },{rootMargin:'-30% 0px -60% 0px'});
+  secs.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>
